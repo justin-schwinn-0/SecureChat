@@ -15,6 +15,8 @@ public:
 
     std::string getUser(const std::string& user);
 
+    void printUsers();
+
     
 
 private:

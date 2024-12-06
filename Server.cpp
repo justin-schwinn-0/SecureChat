@@ -4,14 +4,22 @@
 
 #include "ServerData.h"
 
+#include <thread>
+
 const int SERVER_PORT = 5000;
 
-void processSelfId(int& fd,const std::string& msg)
+void processSelfId(int& fd,const std::string& msg,ServerData& sd)
 {
     auto splits = Utils::split(msg,":");
 
-    Utils::log("user is",splits[1],NetCommon::getIp(fd));
+    std::string ip = NetCommon::getIp(fd);
 
+    Utils::log("user is",splits[1],ip);
+
+    sd.setUser(splits[1],ip);
+
+    sd.printUsers();
+    
 }
 
 void sendList(int& fd)
@@ -27,20 +35,10 @@ void sendList(int& fd)
     NetCommon::sendMsg(fd,msg);
 }
 
-int main()
+void handleConnection(int& fd,ServerData& data)
 {
-    NetServer server;
+    Utils::log("do stuff");
 
-    server.startServer(SERVER_PORT);
-
-    ServerData data;
-
-
-    int fd; 
-    if(!server.acceptConnection(fd))
-    {
-        Utils::log("Connection Failed!");
-    }
 
     Utils::log("connected with FD",fd);
 
@@ -50,7 +48,7 @@ int main()
         Utils::log("recv Failed!");
     }
 
-    processSelfId(fd,msg);
+    processSelfId(fd,msg,data);
 
     sendList(fd);
 
@@ -60,6 +58,29 @@ int main()
     }
 
     Utils::log("Received",msg);
+}
+
+int main()
+{
+    NetServer server;
+
+    server.startServer(SERVER_PORT);
+
+    ServerData data;
+
+    while(true)
+    {
+        int fd; 
+        if(!server.acceptConnection(fd))
+        {
+            Utils::log("Connection Failed!");
+        }
+        else
+        {
+            std::thread connectionThread(&handleConnection,&fd,&data);
+            connectionThread.detach();
+        }
+    }
 
     return 0;
 }

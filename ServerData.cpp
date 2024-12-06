@@ -18,3 +18,11 @@ std::string ServerData::getUser(const std::string& name)
     return userData[name];
 }
 
+
+void ServerData::printUsers()
+{
+    for(auto& pair : userData)
+    {
+        Utils::log(pair.first,pair.second);
+    }
+}

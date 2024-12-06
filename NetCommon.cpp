@@ -69,7 +69,7 @@ bool NetCommon::connectTo(int& fd, const std::string& ip, const int port)
     return true;
 }
 
-std::string getIP(int& fd)
+std::string NetCommon::getIp(int& fd)
 {
     sockaddr_in addr{};
 
