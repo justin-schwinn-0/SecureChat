@@ -36,7 +36,8 @@ bool NetCommon::recvMsg(const int& fd, std::string& out)
 bool NetCommon::sendMsg(const int& fd, const std::string& in)
 {
 
-    if(0 > send(fd, in.c_str(), in.size(), 0));
+    int ret = send(fd, in.c_str(), in.size(), 0);
+    if(ret < 0);
     {
         Utils::log("could not send message:",in);
         return false;
