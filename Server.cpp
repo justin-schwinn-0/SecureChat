@@ -9,6 +9,21 @@ void processSelfId(const std::string& msg)
     auto splits = Utils::split(msg,":");
 
     Utils::log("user is",splits[1]);
+
+
+}
+
+void sendList(int& fd)
+{
+    std::vector<std::string> list = {"alice","tom"};
+
+    std::string msg = "list:";
+    for(auto s: list)
+    {
+        msg += s+":";
+    }
+
+    NetCommon::sendMsg(fd,msg);
 }
 
 int main()
@@ -33,6 +48,8 @@ int main()
     }
 
     processSelfId(msg);
+
+    sendList(fd);
 
 
     Utils::log("Received",msg);
