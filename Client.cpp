@@ -52,7 +52,7 @@ int main() {
         Utils::log("recv Failed!");
     }
 
-    Utils::log(msg);
+    processList(msg);
 
     close(client_fd);
     return 0;
