@@ -13,7 +13,7 @@ public:
 
     void setUser(const std::string& user, const std::string& ip);
 
-    std::wTg getUser(const std::string& user);
+    std::string getUser(const std::string& user);
 
     
 
