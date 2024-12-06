@@ -30,7 +30,19 @@ void processList(std::string& list)
     }
 }
 
-int main() {
+std::string getInput(std::string prompt)
+{
+    std::string out;
+
+    Utils::log(prompt);
+    std::cin >> out;
+    return out;
+}
+
+int main() 
+{
+
+    std::string name = getInput("Who are you");
     int client_fd;
 
     // Create an SCTP socket
@@ -40,7 +52,7 @@ int main() {
         return 1;
     }
 
-    std::string message = "id:bob";
+    std::string message = "id:"+name;
 
 
 
@@ -54,10 +66,9 @@ int main() {
 
     processList(msg);
 
-    Utils::log("Choose a user to connect to");
-    std::string user;
-    std::cin >> user;
-    NetCommon::sendMsg(client_fd,"con:bob:"+user);
+    std::string connectToUser = getInput("Choose a User to connect to:");
+
+    NetCommon::sendMsg(client_fd,"con:"+name+":"+connectToUser);
 
     close(client_fd);
     return 0;
