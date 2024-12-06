@@ -77,7 +77,7 @@ int main()
         }
         else
         {
-            std::thread connectionThread(&handleConnection,&fd,&data);
+            std::thread connectionThread(&handleConnection,std::ref(fd),std::ref(data));
             connectionThread.detach();
         }
     }
