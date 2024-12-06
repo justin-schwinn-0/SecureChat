@@ -54,6 +54,11 @@ int main() {
 
     processList(msg);
 
+    Utils::log("Choose a user to connect to");
+    std::string user;
+    std::cin >> user;
+    NetCommon::sendMsg(client_fd,"con:bob:"+user);
+
     close(client_fd);
     return 0;
 }
