@@ -20,6 +20,16 @@ const std::string SERVER_IP = "127.0.0.1";
 const int SERVER_PORT = 5000;
 const int BUFFER_SIZE = 1024;
 
+void processList(std::string& list)
+{
+    auto splits = Utils::split(list,":");
+
+    for(int i = 1; i < splits.size();i++ )
+    {
+        Utils::log(std::to_string(i)+". ",splits[i]);
+    }
+}
+
 int main() {
     int client_fd;
 
