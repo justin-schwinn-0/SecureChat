@@ -13,13 +13,7 @@ public:
 
     bool acceptConnection(int& fd);
     
-    bool recvMsg(const int& fd, std::string& out);
-
-    bool sendMsg(const int& fd, const std::string& in);
-
     void printFd();
-
-
 
 private:
 

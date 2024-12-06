@@ -1,5 +1,6 @@
 #include "Utils.h"
 #include "NetServer.h"
+#include "NetCommon.h"
 
 const int SERVER_PORT = 5000;
 
@@ -19,7 +20,7 @@ int main()
     Utils::log("connected with FD",fd);
 
     std::string msg;
-    if(!server.recvMsg(fd,msg))
+    if(!NetCommon::recvMsg(fd,msg))
     {
         Utils::log("recv Failed!");
 

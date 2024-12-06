@@ -16,7 +16,6 @@
 #include <netinet/sctp.h>
 #include <arpa/inet.h>
 
-const int BUFFER_SIZE = 1024;
 
 NetServer::NetServer():
     mListenFd(-1)
@@ -82,28 +81,4 @@ bool NetServer::acceptConnection(int& fd)
 
     return true;
 
-}
-
-bool NetServer::recvMsg(const int& fd, std::string& out)
-{
-    Utils::log("Try rx");
-    char buffer[BUFFER_SIZE];
-    memset(buffer, 0, BUFFER_SIZE);
-    ssize_t bytes_received = recv(fd, buffer, BUFFER_SIZE, 0);
-    Utils::log("got",bytes_received,"bytes");
-
-    out = buffer;
-    return true;
-}
-
-bool NetServer::sendMsg(const int& fd, const std::string& in)
-{
-    send(fd, in.c_str(), in.size(), 0);
-
-    return true;
-}
-
-void NetServer::printFd()
-{
-    Utils::log("FD:",mListenFd);
 }
