@@ -11,6 +11,8 @@ public:
 
     static bool sendMsg(const int& fd, const std::string& in);
 
+    static bool connectTo(int& fd, const std::string& ip, const int port);
+
 };
 
 #endif

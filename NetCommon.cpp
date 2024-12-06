@@ -39,3 +39,29 @@ bool NetCommon::sendMsg(const int& fd, const std::string& in)
 
     return true;
 }
+
+bool NetCommon::connectTo(int& fd, const std::string& ip, const int port)
+{
+    // Create an SCTP socket
+    fd = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP);
+    if (fd < 0) {
+        perror("Socket creation failed");
+        return false;
+    }
+
+
+    sockaddr_in server_addr{};
+    // Configure the server address
+    server_addr.sin_family = AF_INET;
+    inet_pton(AF_INET, ip.c_str(), &server_addr.sin_addr);
+    server_addr.sin_port = htons(port);
+
+    // Connect to the server
+    if (connect(fd, (sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Connection failed");
+        close(fd);
+        return false;
+    }
+
+    return true;
+}
