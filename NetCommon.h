@@ -13,6 +13,8 @@ public:
 
     static bool connectTo(int& fd, const std::string& ip, const int port);
 
+    static std::string getIp(int& fd)
+
 };
 
 #endif
