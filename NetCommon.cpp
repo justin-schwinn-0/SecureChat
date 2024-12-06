@@ -23,11 +23,9 @@ const int BUFFER_SIZE = 1024;
 
 bool NetCommon::recvMsg(const int& fd, std::string& out)
 {
-    Utils::log("Try rx");
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     ssize_t bytes_received = recv(fd, buffer, BUFFER_SIZE, 0);
-    Utils::log("got",bytes_received,"bytes");
 
     out = buffer;
     return true;
