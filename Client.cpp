@@ -33,7 +33,14 @@ int main() {
     std::string message = "id:bob";
 
 
+
     NetCommon::sendMsg(client_fd,message);
+
+    std::string msg;
+    if(!NetCommon::recvMsg(client_fd,msg))
+    {
+        Utils::log("recv Failed!");
+    }
 
     close(client_fd);
     return 0;
