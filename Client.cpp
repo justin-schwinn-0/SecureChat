@@ -42,6 +42,8 @@ int main() {
         Utils::log("recv Failed!");
     }
 
+    Utils::log(msg);
+
     close(client_fd);
     return 0;
 }
