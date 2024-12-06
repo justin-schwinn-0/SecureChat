@@ -32,6 +32,8 @@ int main()
         Utils::log("recv Failed!");
     }
 
+    processSelfId(msg);
+
 
     Utils::log("Received",msg);
 
