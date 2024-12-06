@@ -4,6 +4,13 @@
 
 const int SERVER_PORT = 5000;
 
+void processSelfId(const std::string& msg)
+{
+    auto splits = Utils::split(msg,":");
+
+    Utils::log("user is",splits[1]);
+}
+
 int main()
 {
     NetServer server;
@@ -23,8 +30,8 @@ int main()
     if(!NetCommon::recvMsg(fd,msg))
     {
         Utils::log("recv Failed!");
-
     }
+
 
     Utils::log("Received",msg);
 
