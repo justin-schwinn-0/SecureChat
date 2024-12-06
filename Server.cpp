@@ -51,6 +51,10 @@ int main()
 
     sendList(fd);
 
+    if(!NetCommon::recvMsg(fd,msg))
+    {
+        Utils::log("recv Failed!");
+    }
 
     Utils::log("Received",msg);
 
