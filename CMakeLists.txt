@@ -24,6 +24,8 @@ set(ClientCode
 
 set(ServerCode
     Server.cpp
+    ServerData.h
+    ServerData.cpp
 )
 
 find_library(SCTP_LIB libsctp.so)

@@ -2,14 +2,15 @@
 #include "NetServer.h"
 #include "NetCommon.h"
 
+#include "ServerData.h"
+
 const int SERVER_PORT = 5000;
 
-void processSelfId(const std::string& msg)
+void processSelfId(int& fd,const std::string& msg)
 {
     auto splits = Utils::split(msg,":");
 
-    Utils::log("user is",splits[1]);
-
+    Utils::log("user is",splits[1],NetCommon::getIp(fd));
 
 }
 
@@ -32,6 +33,8 @@ int main()
 
     server.startServer(SERVER_PORT);
 
+    ServerData data;
+
 
     int fd; 
     if(!server.acceptConnection(fd))
@@ -47,7 +50,7 @@ int main()
         Utils::log("recv Failed!");
     }
 
-    processSelfId(msg);
+    processSelfId(fd,msg);
 
     sendList(fd);
 

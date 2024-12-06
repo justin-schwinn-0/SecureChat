@@ -68,3 +68,15 @@ bool NetCommon::connectTo(int& fd, const std::string& ip, const int port)
 
     return true;
 }
+
+std::string getIP(int& fd)
+{
+    sockaddr_in addr{};
+
+    socklen_t addr_size = sizeof(struct sockaddr_in);
+    int res = getpeername(fd, (struct sockaddr *)&addr, &addr_size);
+
+    std::string ip = inet_ntoa(addr.sin_addr);
+
+    return ip;
+}
