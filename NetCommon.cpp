@@ -35,7 +35,7 @@ bool NetCommon::sendMsg(const int& fd, const std::string& in)
 {
 
     int ret = send(fd, in.c_str(), in.size(), 0);
-    if(ret < 0);
+    if(ret >= 0);
     {
         Utils::log("could not send message:",in,ret);
         return false;
@@ -52,7 +52,6 @@ bool NetCommon::connectTo(int& fd, const std::string& ip, const int port)
         perror("Socket creation failed");
         return false;
     }
-
 
     sockaddr_in server_addr{};
     // Configure the server address
