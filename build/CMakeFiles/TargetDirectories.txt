@@ -1,0 +1,4 @@
+/home/avery/Desktop/NetSec/SecureChat/build/CMakeFiles/SecureChat.dir
+/home/avery/Desktop/NetSec/SecureChat/build/CMakeFiles/Server.dir
+/home/avery/Desktop/NetSec/SecureChat/build/CMakeFiles/edit_cache.dir
+/home/avery/Desktop/NetSec/SecureChat/build/CMakeFiles/rebuild_cache.dir

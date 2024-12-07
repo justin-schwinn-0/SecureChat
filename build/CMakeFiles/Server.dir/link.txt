@@ -1,0 +1,1 @@
+/usr/bin/g++ -g CMakeFiles/Server.dir/Server.cpp.o CMakeFiles/Server.dir/ServerData.cpp.o CMakeFiles/Server.dir/Utils.cpp.o CMakeFiles/Server.dir/NetServer.cpp.o CMakeFiles/Server.dir/NetCommon.cpp.o -o Server 

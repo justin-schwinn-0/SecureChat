@@ -1,0 +1,47 @@
+[
+{
+  "directory": "/home/avery/Desktop/NetSec/SecureChat/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/SecureChat.dir/Client.cpp.o -c /home/avery/Desktop/NetSec/SecureChat/Client.cpp",
+  "file": "/home/avery/Desktop/NetSec/SecureChat/Client.cpp"
+},
+{
+  "directory": "/home/avery/Desktop/NetSec/SecureChat/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/SecureChat.dir/Utils.cpp.o -c /home/avery/Desktop/NetSec/SecureChat/Utils.cpp",
+  "file": "/home/avery/Desktop/NetSec/SecureChat/Utils.cpp"
+},
+{
+  "directory": "/home/avery/Desktop/NetSec/SecureChat/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/SecureChat.dir/NetServer.cpp.o -c /home/avery/Desktop/NetSec/SecureChat/NetServer.cpp",
+  "file": "/home/avery/Desktop/NetSec/SecureChat/NetServer.cpp"
+},
+{
+  "directory": "/home/avery/Desktop/NetSec/SecureChat/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/SecureChat.dir/NetCommon.cpp.o -c /home/avery/Desktop/NetSec/SecureChat/NetCommon.cpp",
+  "file": "/home/avery/Desktop/NetSec/SecureChat/NetCommon.cpp"
+},
+{
+  "directory": "/home/avery/Desktop/NetSec/SecureChat/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/Server.dir/Server.cpp.o -c /home/avery/Desktop/NetSec/SecureChat/Server.cpp",
+  "file": "/home/avery/Desktop/NetSec/SecureChat/Server.cpp"
+},
+{
+  "directory": "/home/avery/Desktop/NetSec/SecureChat/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/Server.dir/ServerData.cpp.o -c /home/avery/Desktop/NetSec/SecureChat/ServerData.cpp",
+  "file": "/home/avery/Desktop/NetSec/SecureChat/ServerData.cpp"
+},
+{
+  "directory": "/home/avery/Desktop/NetSec/SecureChat/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/Server.dir/Utils.cpp.o -c /home/avery/Desktop/NetSec/SecureChat/Utils.cpp",
+  "file": "/home/avery/Desktop/NetSec/SecureChat/Utils.cpp"
+},
+{
+  "directory": "/home/avery/Desktop/NetSec/SecureChat/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/Server.dir/NetServer.cpp.o -c /home/avery/Desktop/NetSec/SecureChat/NetServer.cpp",
+  "file": "/home/avery/Desktop/NetSec/SecureChat/NetServer.cpp"
+},
+{
+  "directory": "/home/avery/Desktop/NetSec/SecureChat/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/Server.dir/NetCommon.cpp.o -c /home/avery/Desktop/NetSec/SecureChat/NetCommon.cpp",
+  "file": "/home/avery/Desktop/NetSec/SecureChat/NetCommon.cpp"
+}
+]
