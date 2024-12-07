@@ -3,8 +3,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 project(SecureChat)
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 set(CommonSources
     Utils.cpp
@@ -37,3 +37,7 @@ add_executable(Server ${ServerCode} ${CommonSources} ${CommonHeaders})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SCTP_LIB})
 target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
 #target_link_libraries(${PROJECT_NAME} PRIVATE ${THREAD_LIB})
+
+find_package(OpenSSL REQUIRED)
+target_link_libraries(Server PRIVATE OpenSSL::Crypto)
+target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
