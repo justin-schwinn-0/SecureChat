@@ -2,6 +2,35 @@
 #define NETCOMMON_H
 
 #include <string>
+#include <vector>
+
+
+const int ID = 1;
+const int LIST = 2;
+const int CON = 3;
+const int EXIT = 4;
+
+
+const int ACCEPT = 5;
+const int REJECT = 5;
+
+
+
+const std::string DELIM = ":";
+
+struct Message
+{
+    int msgId = -1;
+    std::vector<std::string> payload;
+
+    Message();
+    Message(int id,std::vector<std::string> p):
+        msgId(id),
+        payload(p)
+    {}
+    Message(std::string str);
+};
+
 
 class NetCommon
 {
@@ -14,6 +43,8 @@ public:
     static bool connectTo(int& fd, const std::string& ip, const int port);
 
     static std::string getIp(int& fd);
+
+    static bool sendPayload(const int& fd, const Message& message);
 
 };
 

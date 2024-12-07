@@ -8,56 +8,97 @@
 
 const int SERVER_PORT = 5000;
 
-void processSelfId(int& fd,const std::string& msg,ServerData& sd)
+void processSelfId(int& fd,const Message& msg,ServerData& sd)
 {
-    auto splits = Utils::split(msg,":");
-
     std::string ip = NetCommon::getIp(fd);
 
-    Utils::log("user is",splits[1],ip);
+    Utils::log("user is",msg.payload[0],ip);
 
-    sd.setUser(splits[1],ip);
+    sd.setUser(msg.payload[0],ip);
 
     sd.printUsers();
-    
 }
 
-void sendList(int& fd)
+void sendList(int& fd,ServerData& sd,const std::string& requestingUser)
 {
-    std::vector<std::string> list = {"alice","tom"};
-
-    std::string msg = "list:";
-    for(auto s: list)
-    {
-        msg += s+":";
+    std::vector<std::string> msg;
+    for(auto s: sd.getListForUser(requestingUser))
+    { 
+        msg.push_back(s+":");
     }
 
-    NetCommon::sendMsg(fd,msg);
+
+    NetCommon::sendPayload(fd,Message(LIST,msg));
 }
 
-void handleConnection(int& fd,ServerData& data)
+void connectCtC(int& client1,const Message& msg,ServerData& sd)
 {
-    Utils::log("do stuff");
+    Utils::log("connecting",msg.payload[0], "to",msg.payload[1]);
+        
+    if(sd.makeRequest(msg.payload[0],msg.payload[1]))
+    {
+        Utils::log("request made");
+        sd.printRequests();
+    }
+    else
+    {
+        Utils::log("Cannot allow request");
+    }
+}
 
+bool handleMsg(int& fd,const std::string& str,ServerData& data)
+{
+    auto msg = Message(str);
+    
 
+    switch(msg.msgId)
+    {
+        case ID:
+            processSelfId(fd,msg,data);
+            sendList(fd,data,msg.payload[0]);
+            break;
+        case LIST:
+            sendList(fd,data,msg.payload[0]);
+            break;
+        case CON:
+            connectCtC(fd,msg,data);
+            break;
+        default:
+            Utils::log("Unknown msg_id:",msg.msgId,"\n");
+            return true;
+    }
+
+    return false;
+}
+
+void handleConnection(int fd,ServerData& data)
+{
     Utils::log("connected with FD",fd);
 
-    std::string msg;
-    if(!NetCommon::recvMsg(fd,msg))
+    bool hasExited = false;
+    do
     {
-        Utils::log("recv Failed!");
-    }
+        std::string msg;
+        if(!NetCommon::recvMsg(fd,msg))
+        {
+            Utils::log("recv Failed!");
+        }
 
-    processSelfId(fd,msg,data);
+        if(msg.empty())
+        {
+            hasExited= true;
+        }
+        else
+        {
+            Utils::log("Received",msg);
+            hasExited = handleMsg(fd,msg,data);
+        }
 
-    sendList(fd);
+        Utils::log(fd,"has exited:",hasExited);
 
-    if(!NetCommon::recvMsg(fd,msg))
-    {
-        Utils::log("recv Failed!");
-    }
+    }while(!hasExited);
 
-    Utils::log("Received",msg);
+    Utils::log("exiting for fd",fd);
 }
 
 int main()
@@ -77,7 +118,7 @@ int main()
         }
         else
         {
-            std::thread connectionThread(&handleConnection,std::ref(fd),std::ref(data));
+            std::thread connectionThread(&handleConnection,fd,std::ref(data));
             connectionThread.detach();
         }
     }

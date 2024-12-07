@@ -21,6 +21,16 @@
 const int BUFFER_SIZE = 1024;
 
 
+Message::Message(std::string str)
+{
+    auto splits = Utils::split(str,DELIM);
+
+    msgId = Utils::strToInt(splits[0]);
+
+    payload = std::vector<std::string>(splits.begin()+1,splits.end());
+
+}
+
 bool NetCommon::recvMsg(const int& fd, std::string& out)
 {
     char buffer[BUFFER_SIZE];
@@ -34,6 +44,7 @@ bool NetCommon::recvMsg(const int& fd, std::string& out)
 bool NetCommon::sendMsg(const int& fd, const std::string& in)
 {
 
+    Utils::log("send", in);
     int ret = send(fd, in.c_str(), in.size(), 0);
     if(ret < 0)
     {
@@ -80,3 +91,22 @@ std::string NetCommon::getIp(int& fd)
 
     return ip;
 }
+
+
+bool NetCommon::sendPayload(const int& fd,const Message& message)
+{
+    std::string msg = std::to_string(message.msgId) + DELIM;
+
+    for(int i = 0; i < message.payload.size();i++)
+    {
+        msg += message.payload[i];
+
+        if(i != message.payload.size()-1)
+        {
+            msg+= DELIM;
+        }
+    }
+
+    return NetCommon::sendMsg(fd,msg);
+}
+
