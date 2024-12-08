@@ -272,7 +272,7 @@ bool handleMsg(int& fd,const std::string& str)
 
 int main(int argc, char** argv) 
 {
-    std::string serverIp;
+    std::string serverIp = "127.0.0.1";
     if(argc != 2)
     {
         Utils::log("No IP given!");
