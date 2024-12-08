@@ -29,7 +29,7 @@ set(ServerCode
 )
 
 find_library(SCTP_LIB libsctp.so)
-#find_library(THREAD_LIB libpthread.so)
+find_library(THREAD_LIB libpthread.so)
 
 
 add_executable(${PROJECT_NAME} ${ClientCode} ${CommonSources} ${CommonHeaders})
