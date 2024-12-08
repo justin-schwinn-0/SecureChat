@@ -36,7 +36,7 @@ add_executable(${PROJECT_NAME} ${ClientCode} ${CommonSources} ${CommonHeaders})
 add_executable(Server ${ServerCode} ${CommonSources} ${CommonHeaders})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SCTP_LIB})
 target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
-#target_link_libraries(${PROJECT_NAME} PRIVATE ${THREAD_LIB})
+target_link_libraries(Server PRIVATE ${THREAD_LIB})
 
 find_package(OpenSSL REQUIRED)
 target_link_libraries(Server PRIVATE OpenSSL::Crypto)
