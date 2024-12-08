@@ -9,8 +9,10 @@ const std::string NONE= "none";
 
 struct UserData
 {
+    int fd;
     std::string ip;
     std::string commRequest;
+    bool busy;
 };
 
 class ServerData
@@ -19,7 +21,7 @@ public:
     ServerData();
     ~ServerData();
 
-    void setUser(const std::string& user, const std::string& ip);
+    void setUser(const int fd,const std::string& user, const std::string& ip);
 
     const UserData& getUser(const std::string& user);
 

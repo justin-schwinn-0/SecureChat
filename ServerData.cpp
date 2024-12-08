@@ -8,9 +8,9 @@ ServerData::~ServerData()
 {
 }
 
-void ServerData::setUser(const std::string& user, const std::string& ip)
+void ServerData::setUser(const int fd,const std::string& user, const std::string& ip)
 {
-    UserData newUser= {ip,NONE};
+    UserData newUser= {fd,ip,NONE,false};
 
     userData[user] = newUser;
 }
@@ -30,6 +30,10 @@ void ServerData::printUsers()
 
 bool ServerData::makeRequest(std::string requester ,std::string requested)
 {
+    if(requester == requested)
+    {
+        return false;
+    }
     if(userData.find(requested) != userData.end() && getRequester(requested) == NONE)
     {
         userData[requested].commRequest = requester;
@@ -66,7 +70,11 @@ std::vector<std::string> ServerData::getListForUser(const std::string& user)
         std::string str = u.first;
 
         //Utils::log(user,getRequester(u.first));
-        if(getRequester(u.first) != NONE)
+        if(u.second.busy)
+        {
+            str+= " BUSY";
+        }
+        else if(user == u.first && getRequester(u.first) != NONE)
         {
             str += " COM REQ FROM "+ u.second.commRequest;
         }

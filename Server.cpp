@@ -12,13 +12,13 @@
 
 const int SERVER_PORT = 5000;
 
-void processSelfId(int& fd,const Message& msg,ServerData& sd)
+void processSelfId(const int& fd,const Message& msg,ServerData& sd)
 {
     std::string ip = NetCommon::getIp(fd);
 
     Utils::log("user is",msg.payload[0],ip);
 
-    sd.setUser(msg.payload[0],ip);
+    sd.setUser(fd,msg.payload[0],ip);
 
     sd.printUsers();
 }
@@ -30,7 +30,6 @@ void sendList(int& fd,ServerData& sd,const std::string& requestingUser)
     { 
         msg.push_back(s+":");
     }
-
 
     NetCommon::sendPayload(fd,Message(LIST,msg));
 }
@@ -50,6 +49,37 @@ void connectCtC(int& client1,const Message& msg,ServerData& sd)
     }
 }
 
+void clientAcceptsConnection(int& client2,const Message& msg,ServerData& sd)
+{
+    // tell client 2 to open server
+    // tell client 1 to connect to client 2 server
+    // mark client 1 and 2 as busy
+    
+    //User (client 2) accepted connection to (client 1)
+    auto client1Name = sd.getRequester(msg.payload[0]);
+    auto client2Name = msg.payload[0];
+
+    if(client1Name == NONE)
+    {
+        Utils::log("Client",client2Name,"has no requests!");
+        NetCommon::sendPayload(client2,Message(REJECT,{}));
+        return;
+
+    }
+    Utils::log("User",client2Name,"accepted connection to",client1Name);
+
+    // send client 2 opens server
+    NetCommon::sendPayload(client2,Message(OPEN_SERVER,{}));
+
+
+    int client1Fd = sd.getUser(client1Name).fd;
+    std::string client2Ip = NetCommon::getIp(client2);
+
+    // send client 1 cmd to connect with IP
+    NetCommon::sendPayload(client1Fd,Message(CONNECT_TO,{client2Ip}));
+    
+}       
+
 bool handleMsg(int& fd,const std::string& str,ServerData& data)
 {
     auto msg = Message(str);
@@ -66,6 +96,9 @@ bool handleMsg(int& fd,const std::string& str,ServerData& data)
             break;
         case CON:
             connectCtC(fd,msg,data);
+            break;
+        case ACCEPT:
+            clientAcceptsConnection(fd,msg,data);
             break;
         default:
             Utils::log("Unknown msg_id:",msg.msgId,"\n");
@@ -94,15 +127,13 @@ void handleConnection(int fd,ServerData& data)
         }
         else
         {
-            Utils::log("Received",msg);
+            //Utils::log("Received",msg);
             hasExited = handleMsg(fd,msg,data);
         }
 
-        Utils::log(fd,"has exited:",hasExited);
+        //Utils::log(fd,"has exited:",hasExited);
 
     }while(!hasExited);
-
-    Utils::log("exiting for fd",fd);
 }
 
 int main()

@@ -43,12 +43,11 @@ bool NetCommon::recvMsg(const int& fd, std::string& out)
 
 bool NetCommon::sendMsg(const int& fd, const std::string& in)
 {
-
-    Utils::log("send", in);
+    //Utils::log("send", in);
     int ret = send(fd, in.c_str(), in.size(), 0);
     if(ret < 0)
     {
-        Utils::log("could not send message TEST:",in,ret);
+        Utils::log("could not send message:",in,ret);
         return false;
     }
 
@@ -80,7 +79,7 @@ bool NetCommon::connectTo(int& fd, const std::string& ip, const int port)
     return true;
 }
 
-std::string NetCommon::getIp(int& fd)
+std::string NetCommon::getIp(const int& fd)
 {
     sockaddr_in addr{};
 

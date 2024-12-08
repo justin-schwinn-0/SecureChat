@@ -12,7 +12,12 @@ const int EXIT = 4;
 
 
 const int ACCEPT = 5;
-const int REJECT = 5;
+const int REJECT = 6;
+
+const int OPEN_SERVER = 7;
+const int CONNECT_TO = 8;
+
+const int CHAT_MSG = 9;
 
 
 
@@ -42,7 +47,7 @@ public:
 
     static bool connectTo(int& fd, const std::string& ip, const int port);
 
-    static std::string getIp(int& fd);
+    static std::string getIp(const int& fd);
 
     static bool sendPayload(const int& fd, const Message& message);
 
