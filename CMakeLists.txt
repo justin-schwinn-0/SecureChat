@@ -29,14 +29,14 @@ set(ServerCode
 )
 
 find_library(SCTP_LIB libsctp.so)
-find_library(THREAD_LIB libpthread.so)
+#find_library(THREAD_LIB libpthread.so)
 
 
 add_executable(${PROJECT_NAME} ${ClientCode} ${CommonSources} ${CommonHeaders})
 add_executable(Server ${ServerCode} ${CommonSources} ${CommonHeaders})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SCTP_LIB})
 target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
-target_link_libraries(Server PRIVATE ${THREAD_LIB})
+#target_link_libraries(Server PRIVATE ${THREAD_LIB})
 
 find_package(OpenSSL REQUIRED)
 target_link_libraries(Server PRIVATE OpenSSL::Crypto)

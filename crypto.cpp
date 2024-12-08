@@ -5,6 +5,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <iostream>
 
 #include <cstring>
 
@@ -163,7 +164,7 @@ void rsa() {
 
 int main()
 {
-    rsa();
+    //rsa();
 
     std::string encrypted = custom_encrypt("Bob",
                     "First line of Harry Potter: “Mr. and Mrs. Dursley of number four, Privet Drive, were proud to say that they were perfectly normal, thank you very much.”", "1234567890abcdef");
