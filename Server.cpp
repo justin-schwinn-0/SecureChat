@@ -6,6 +6,10 @@
 
 #include <thread>
 
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+
 const int SERVER_PORT = 5000;
 
 void processSelfId(int& fd,const Message& msg,ServerData& sd)
