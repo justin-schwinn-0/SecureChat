@@ -95,7 +95,7 @@ void processSelfId(const int& fd,const Message& msg,ServerData& sd)
 {
     std::string ip = NetCommon::getIp(fd);
 
-    authenticate(fd,msg,sd);
+    //authenticate(fd,msg,sd);
 
     Utils::log("user is",msg.payload[0],ip);
 
@@ -112,7 +112,7 @@ void sendList(int& fd,ServerData& sd,const std::string& requestingUser)
         msg.push_back(s+":");
     }
 
-    NetCommon::sendPayload(fd,Message(LIST,msg));
+    NetCommon::secSendPayload(fd,Message(LIST,msg));
 }
 
 void connectCtC(int& client1,const Message& msg,ServerData& sd)
@@ -143,21 +143,21 @@ void clientAcceptsConnection(int& client2,const Message& msg,ServerData& sd)
     if(client1Name == NONE)
     {
         Utils::log("Client",client2Name,"has no requests!");
-        NetCommon::sendPayload(client2,Message(REJECT,{}));
+        NetCommon::secSendPayload(client2,Message(REJECT,{}));
         return;
 
     }
     Utils::log("User",client2Name,"accepted connection to",client1Name);
 
     // send client 2 opens server
-    NetCommon::sendPayload(client2,Message(OPEN_SERVER,{}));
+    NetCommon::secSendPayload(client2,Message(OPEN_SERVER,{}));
 
 
     int client1Fd = sd.getUser(client1Name).fd;
     std::string client2Ip = NetCommon::getIp(client2);
 
     // send client 1 cmd to connect with IP
-    NetCommon::sendPayload(client1Fd,Message(CONNECT_TO,{client2Ip}));
+    NetCommon::secSendPayload(client1Fd,Message(CONNECT_TO,{client2Ip}));
     
 }      
 
@@ -182,7 +182,7 @@ bool handleMsg(int& fd,const std::string& str,ServerData& data)
             clientAcceptsConnection(fd,msg,data);
             break;
         default:
-            Utils::log("Unknown msg_id:",msg.msgId,"\n");
+            Utils::log("Unknown msg_id:",msg.msgId,"\n",str);
             return true;
     }
 
@@ -194,12 +194,11 @@ void handleConnection(int fd,ServerData& data)
 {
     Utils::log("connected with FD",fd);
 
-
     bool hasExited = false;
     do
     {
         std::string msg;
-        if(!NetCommon::recvMsg(fd,msg))
+        if(!NetCommon::secRecvMsg(fd,msg))
         {
             Utils::log("recv Failed!");
         }

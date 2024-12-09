@@ -82,16 +82,16 @@ bool handleCommand(int& serverFd,const std::string& cmd,const std::string& name)
     switch(msgId)
     {
         case LIST:
-            NetCommon::sendPayload(serverFd,Message(msgId,{name}));
+            NetCommon::secSendPayload(serverFd,Message(msgId,{name}));
             break;
         case CON:
-            NetCommon::sendPayload(serverFd,Message(msgId,{name,segments[1]}));
+            NetCommon::secSendPayload(serverFd,Message(msgId,{name,segments[1]}));
             break;
         case ACCEPT:
-            NetCommon::sendPayload(serverFd,Message(msgId,{name}));
+            NetCommon::secSendPayload(serverFd,Message(msgId,{name}));
             break;
         case REJECT:
-            NetCommon::sendPayload(serverFd,Message(msgId,{name}));
+            NetCommon::secSendPayload(serverFd,Message(msgId,{name}));
             break;
         case HELP:
             listCommands();
@@ -138,7 +138,7 @@ void handleList(std::vector<std::string> list)
 
 void sendExitChatCmd(const int fd)
 {
-    if(!NetCommon::sendPayload(fd,Message(EXIT,{})));
+    if(!NetCommon::secSendPayload(fd,Message(EXIT,{})));
     {
         Utils::log("could not send exit Cmd!");
     }
@@ -174,7 +174,7 @@ void chatLoop(int fd)
     while(!hasExited)
     {
         std::string str;
-        if(!NetCommon::recvMsg(fd,str))
+        if(!NetCommon::secRecvMsg(fd,str))
         {
             Utils::log("recv Failed!");
             sendExitChatCmd(fd);
@@ -195,7 +195,7 @@ void chatLoop(int fd)
         }
         else
         {
-            if(!NetCommon::sendPayload(fd,Message(CHAT_MSG,{msgOut})))
+            if(!NetCommon::secSendPayload(fd,Message(CHAT_MSG,{msgOut})))
             {
                 Utils::log("Could not send message!");
                 sendExitChatCmd(fd);
@@ -226,7 +226,7 @@ void openServer()
 
     std::string firstMessage = getInput("Send first Message:");
 
-    NetCommon::sendPayload(fd,Message(CHAT_MSG,{firstMessage}));
+    NetCommon::secSendPayload(fd,Message(CHAT_MSG,{firstMessage}));
 
     chatLoop(fd);
 
@@ -277,7 +277,7 @@ bool handleMsg(int& fd,const std::string& str)
 
 bool handleAuth(const int fd, ttmath::UInt<3>& nonce,const std::string& name)
 {
-    if(!NetCommon::sendPayload(fd,Message(ID,{name})))
+    if(!NetCommon::secSendPayload(fd,Message(ID,{name})))
     {
         Utils::error("Could not send ID!");
         return false;
@@ -355,9 +355,14 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    ttmath::UInt<3> nonce1024;
+    //ttmath::UInt<3> nonce1024;
 
-    handleAuth(centralServerFd,nonce1024,name);
+    //handleAuth(centralServerFd,nonce1024,name);
+    if(!NetCommon::secSendPayload(centralServerFd,Message(ID,{name})))
+    {
+        Utils::error("Could not send ID!");
+        return false;
+    }
 
 
     while(true)
@@ -380,7 +385,7 @@ int main(int argc, char** argv)
     }
     Utils::log("exiting");
 
-    //NetCommon::sendPayload(centralServerFd,Message(CON,{name,connectToUser}));
+    //NetCommon::secSendPayload(centralServerFd,Message(CON,{name,connectToUser}));
 
     close(centralServerFd);
     return 0;

@@ -18,8 +18,6 @@ const int CONNECT_TO = 8;
 
 const int CHAT_MSG = 9;
 
-
-
 const std::string DELIM = ":";
 
 struct Message
@@ -41,9 +39,11 @@ class NetCommon
 public:
 
     static bool recvMsg(const int& fd, std::string& out);
+    static bool secRecvMsg(const int& fd, std::string& out);
     static bool recvMsg(const int& fd, std::vector<unsigned char>& out);
 
     static bool sendMsg(const int& fd, const std::string& in);
+    static bool secSendMsg(const int& fd, const std::string& in);
     static bool sendMsg(const int& fd, const std::vector<unsigned char> in);
 
     static bool connectTo(int& fd, const std::string& ip, const int port);
@@ -51,6 +51,7 @@ public:
     static std::string getIp(const int& fd);
 
     static bool sendPayload(const int& fd, const Message& message);
+    static bool secSendPayload(const int& fd, const Message& message);
 
 };
 

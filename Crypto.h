@@ -5,6 +5,10 @@
 #include <string>
 #include <memory>
 #include <vector>
+
+const std::string DEFAULT_KEY ="bob";
+const std::string DEFAULT_IV ="1234567890abcdef";
+
 class Crypto
 {
 public:
