@@ -45,7 +45,6 @@ bool NetCommon::recvMsg(const int& fd, std::string& out)
 
     ssize_t bytes_received = sctp_recvmsg(fd, buffer, BUFFER_SIZE, NULL,0,&sndrcvinfo,&flags);
 
-
     out = buffer;
     return true;
 }
@@ -59,7 +58,6 @@ bool NetCommon::secRecvMsg(const int& fd, std::string& out)
     int flags=0;
 
     ssize_t bytes_received = sctp_recvmsg(fd, buffer, BUFFER_SIZE, NULL,0,&sndrcvinfo,&flags);
-
 
     std::string msg = buffer;
     out = Crypto::custom_decrypt(DEFAULT_KEY,msg,DEFAULT_IV);
@@ -106,7 +104,7 @@ bool NetCommon::secSendMsg(const int& fd, const std::string& in)
         return false;
     }
 
-    Utils::log("sent:",ret,in,msg);
+    Utils::log("sent:",ret,);
 
     return true;
 }

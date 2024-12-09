@@ -369,7 +369,7 @@ int main(int argc, char** argv)
     {
         //Utils::log("Listening to server");
         std::string msg;
-        if(!NetCommon::recvMsg(centralServerFd,msg))
+        if(!NetCommon::secRecvMsg(centralServerFd,msg))
         {
             Utils::log("recv Failed!");
         }
