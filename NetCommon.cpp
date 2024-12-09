@@ -42,7 +42,6 @@ bool NetCommon::recvMsg(const int& fd, std::string& out)
     memset(buffer, 0, BUFFER_SIZE);
     struct sctp_sndrcvinfo sndrcvinfo;
     int flags=0;
-
     ssize_t bytes_received = sctp_recvmsg(fd, buffer, BUFFER_SIZE, NULL,0,&sndrcvinfo,&flags);
 
     out = buffer;
@@ -64,11 +63,14 @@ bool NetCommon::secRecvMsg(const int& fd, std::string& out,const std::string& ke
     std::string cipherText = msgRx.substr(0,msgRx.size()-16);
     std::string hash = msgRx.substr(msgRx.size()-16);
 
+    Utils::log("Message and hash",cipherText.size(),hash.size());
+
     std::string newhash = Crypto::md5_encrypt(key,"0000000000000000",cipherText);
+        Utils::log("key:",key);
 
     if(newhash != hash)
     {
-        Utils::log("Message integrity failure!");
+        Utils::log("Message integrity failure!",newhash,hash,key);
         return false;
     }
 

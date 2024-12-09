@@ -102,21 +102,59 @@ bool authenticate(const int& fd,const Message& msg,ServerData& sd,ttmath::UInt<8
         Utils::error("Could not send Nonce!");
     }
 
+    std::string strMsg;
+    if(!NetCommon::secRecvMsg(fd,strMsg,nonce.ToString()))
+    {
+        Utils::log("recv Failed!");
+    }
+
+    auto resp = Message(strMsg);
+
+
+
+    if(resp.msgId == CHALLENGE_RESP)
+    {
+        ttmath::UInt<8> otherNonce = resp.payload[0];
+
+        if((otherNonce-1) == nonce)
+        {
+            Utils::log("Authenticated!");
+            
+            nonce+=2;
+            if(!NetCommon::secSendPayload(fd,Message(ACCEPT_AUTH,{}),nonce.ToString()))
+            {
+                Utils::log("auth failed");
+            }
+            return true;
+
+        }
+        else
+        {
+            Utils::log("Authentication fail!",otherNonce,nonce);
+
+        }
+    }
+
     RSA_free(pubKey);
     return false;
 }
 
-void processSelfId(const int& fd,const Message& msg,ServerData& sd, ttmath::UInt<8> key)
+bool processSelfId(const int& fd,const Message& msg,ServerData& sd, ttmath::UInt<8>& key)
 {
     std::string ip = NetCommon::getIp(fd);
 
-    authenticate(fd,msg,sd,key);
+    if(!authenticate(fd,msg,sd,key))
+    {
+        return false;
+    }
 
     Utils::log("user is",msg.payload[0],ip);
 
     sd.setUser(fd,msg.payload[0],ip);
 
     sd.printUsers();
+
+    return true;
 }
 
 void sendList(int& fd,ServerData& sd,const std::string& requestingUser,const std::string& key)
@@ -169,15 +207,21 @@ void clientAcceptsConnection(int& client2,const Message& msg,ServerData& sd,cons
     sd.setBusy(client1Name);
     sd.setBusy(client2Name);
 
+    ttmath::UInt<8> ck;
+    generateRandom(ck);
+    std::string clientKey = ck.ToString();
     // send client 2 opens server
-    NetCommon::secSendPayload(client2,Message(OPEN_SERVER,{}),key);
+    NetCommon::secSendPayload(client2,Message(OPEN_SERVER,{clientKey}),key);
 
+    Utils::log(__FUNCTION__,__LINE__);
 
     int client1Fd = sd.getUser(client1Name).fd;
     std::string client2Ip = NetCommon::getIp(client2);
+    Utils::log(__FUNCTION__,__LINE__);
 
     // send client 1 cmd to connect with IP
-    NetCommon::secSendPayload(client1Fd,Message(CONNECT_TO,{client2Ip}),key);
+    NetCommon::secSendPayload(client1Fd,Message(CONNECT_TO,{client2Ip,clientKey}),key);
+    Utils::log(__FUNCTION__,__LINE__);
     
 }      
 
@@ -222,7 +266,15 @@ void handleConnection(int fd,ServerData& data)
     auto IdMsg = Message(msg);
 
     ttmath::UInt<8> key;
-    processSelfId(fd,IdMsg,data,key);
+    if(!processSelfId(fd,IdMsg,data,key))
+    {
+        return;
+    }
+    else
+    {
+        Utils::log("pint key",key.ToString());
+        sendList(fd,data,IdMsg.payload[0],key.ToString());
+    }
 
 
     bool hasExited = false;

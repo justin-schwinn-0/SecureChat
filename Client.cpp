@@ -77,7 +77,7 @@ bool handleCommand(int& serverFd,const std::string& cmd,const std::string& name,
         return false;
     }
 
-    //Utils::log("command:",msgId);
+    Utils::log("command:",msgId);
 
     switch(msgId)
     {
@@ -238,7 +238,7 @@ void openServer(const std::string&  clientKey)
 
 void connectToOtherClient(const Message& msg,const std::string& clientKey)
 {
-    //Utils::log("connect to other client");
+    Utils::log("connect to other client");
 
     std::string otherClientIp = msg.payload[0];
     int otherClientFd;
@@ -256,6 +256,7 @@ void connectToOtherClient(const Message& msg,const std::string& clientKey)
 bool handleMsg(int& fd,const std::string& str,const std::string& key)
 {
     auto msg = Message(str);
+    Utils::log("asdsadasdsad");
 
     switch(msg.msgId)
     {
@@ -264,13 +265,15 @@ bool handleMsg(int& fd,const std::string& str,const std::string& key)
             break;
         case OPEN_SERVER:
             {
-            std::string clientKey;
+            std::string clientKey = "123";
+            Utils::log("ck",clientKey);
             openServer(clientKey);
             break;
             }
         case CONNECT_TO:
             {
-            std::string clientKey;
+            std::string clientKey = "123";
+            Utils::log("ck",clientKey);
             connectToOtherClient(msg,clientKey);
             break;
             }
@@ -325,6 +328,22 @@ bool handleAuth(const int fd, ttmath::UInt<8>& key,const std::string& name)
         return false;
     }
 
+    key+=2;
+    std::string strMsg;
+    if(!NetCommon::secRecvMsg(fd,strMsg,key.ToString()))
+    {
+        Utils::log("recv Failed!");
+    }
+
+    auto auth = Message(strMsg);
+
+    if(auth.msgId == ACCEPT_AUTH)
+    {
+        return true;
+    }
+
+    return false;
+
 }
 
 int main(int argc, char** argv) 
@@ -360,9 +379,16 @@ int main(int argc, char** argv)
 
     ttmath::UInt<8> key;
 
-    handleAuth(centralServerFd,key,name);
+    if(handleAuth(centralServerFd,key,name))
+    {
+        Utils::log("Authenticated!");
+    }
+    else
+    {
+        Utils::log("Authentication Failed!");
+        return 1; 
+    }
 
-    Utils::log("out of auth!");
 
     while(true)
     {

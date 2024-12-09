@@ -20,6 +20,9 @@ const int CHAT_MSG = 9;
 
 const int CHALLENGE_RESP = 10;
 
+const int ACCEPT_AUTH = 11;
+const int ACCEPT_REF = 12;
+
 const std::string DELIM = ":";
 
 struct Message
