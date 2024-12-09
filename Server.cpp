@@ -10,11 +10,92 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
+#include "ttmath/ttmath.h"
+
+#include "Crypto.h"
+
+#include <random>
+
 const int SERVER_PORT = 5000;
+
+
+template<long unsigned int T>
+void generateRandom(ttmath::UInt<T>& num)
+{
+    std::random_device rd;  
+    std::mt19937 generator(rd()); 
+    std::uniform_int_distribution<uint32_t> distribution(0, 0xFFFFFFFF);
+
+    for(int i = 0; i < T; i++)
+    {
+        num.table[i] = distribution(generator);
+    }
+
+    //Utils::log("generated",num);
+}
+
+bool authenticate(const int& fd,const Message& msg,ServerData& sd)
+{
+    // do auth
+    ttmath::UInt<3> nonce1024;
+
+    generateRandom(nonce1024);
+
+    //nonce1024 = 6;
+
+    Utils::log("Nonce:",nonce1024);
+
+    std::string name = msg.payload[0];
+
+    auto pubKey = Crypto::load_public_key_from_file("Keys/"+name+".pem.pub"); 
+
+    Utils::log("read public key of",name);
+
+    std::vector<unsigned char> unsignedNonce;
+
+    for(int i = 0; i < nonce1024.Size();i++)
+    {
+        uint64_t segment = nonce1024.table[i];
+
+        for(int j = 0; j < 4 ;j++)
+        {
+            unsignedNonce.push_back(static_cast<unsigned char>(segment & 0xFF));
+            segment>>=8;
+        }
+        Crypto::printEncryption(unsignedNonce);
+    }
+
+    std::vector<unsigned char> signedNonce(RSA_size(pubKey));
+    int encryptedBytes = RSA_public_encrypt(
+                     nonce1024.Size()*8,
+                     reinterpret_cast <const unsigned char*>(nonce1024.table),
+                     signedNonce.data(),
+                     pubKey,
+                     RSA_PKCS1_OAEP_PADDING);
+
+    if(encryptedBytes == -1)
+    {
+        Utils::log(ERR_error_string(ERR_get_error(), nullptr));
+    }
+
+    if(!NetCommon::sendMsg(fd,signedNonce))
+    {
+        Utils::error("Could not send Nonce!");
+    }
+
+    Crypto::printEncryption(signedNonce);
+
+    Utils::log("encrypted", encryptedBytes);
+
+    RSA_free(pubKey);
+    return false;
+}
 
 void processSelfId(const int& fd,const Message& msg,ServerData& sd)
 {
     std::string ip = NetCommon::getIp(fd);
+
+    authenticate(fd,msg,sd);
 
     Utils::log("user is",msg.payload[0],ip);
 
@@ -78,7 +159,7 @@ void clientAcceptsConnection(int& client2,const Message& msg,ServerData& sd)
     // send client 1 cmd to connect with IP
     NetCommon::sendPayload(client1Fd,Message(CONNECT_TO,{client2Ip}));
     
-}       
+}      
 
 bool handleMsg(int& fd,const std::string& str,ServerData& data)
 {
@@ -108,9 +189,11 @@ bool handleMsg(int& fd,const std::string& str,ServerData& data)
     return false;
 }
 
+
 void handleConnection(int fd,ServerData& data)
 {
     Utils::log("connected with FD",fd);
+
 
     bool hasExited = false;
     do
@@ -138,6 +221,9 @@ void handleConnection(int fd,ServerData& data)
 
 int main()
 {
+
+    ttmath::UInt<4> bigInt1 = "123456789123456789";
+
     NetServer server;
 
     server.startServer(SERVER_PORT);

@@ -15,6 +15,9 @@
 #include <netinet/sctp.h>
 #include <arpa/inet.h>
 
+#include <openssl/evp.h>
+#include <openssl/err.h>
+
 
 #include "Utils.h"
 
@@ -35,9 +38,27 @@ bool NetCommon::recvMsg(const int& fd, std::string& out)
 {
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
-    ssize_t bytes_received = recv(fd, buffer, BUFFER_SIZE, 0);
+    struct sctp_sndrcvinfo sndrcvinfo;
+    int flags=0;
+
+    ssize_t bytes_received = sctp_recvmsg(fd, buffer, BUFFER_SIZE, NULL,0,&sndrcvinfo,&flags);
+
 
     out = buffer;
+    return true;
+}
+
+bool NetCommon::recvMsg(const int& fd, std::vector<unsigned char>& out)
+{
+    unsigned char buffer[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
+    struct sctp_sndrcvinfo sndrcvinfo;
+    int flags=0;
+
+    ssize_t bytes_received = sctp_recvmsg(fd, buffer, BUFFER_SIZE, NULL,0,&sndrcvinfo,&flags);
+
+
+    out = std::vector<unsigned char>(buffer,buffer+bytes_received);
     return true;
 }
 
@@ -48,6 +69,19 @@ bool NetCommon::sendMsg(const int& fd, const std::string& in)
     if(ret < 0)
     {
         Utils::log("could not send message:",in,ret);
+        return false;
+    }
+
+    return true;
+}
+
+bool NetCommon::sendMsg(const int& fd, const std::vector<unsigned char> in)
+{
+    //Utils::log("send", in);
+    int ret = send(fd, in.data(), in.size(), 0);
+    if(ret < 0)
+    {
+        Utils::log("could not send message unsigned char message",ret);
         return false;
     }
 
@@ -108,4 +142,3 @@ bool NetCommon::sendPayload(const int& fd,const Message& message)
 
     return NetCommon::sendMsg(fd,msg);
 }
-

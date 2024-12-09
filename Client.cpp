@@ -16,6 +16,11 @@
 #include "NetCommon.h"
 #include "NetServer.h"
 #include "Utils.h"
+#include "Crypto.h"
+
+#include <openssl/err.h>
+
+#include "ttmath/ttmath.h"
 
 const std::string SERVER_IP = "127.0.0.1";
 const int SERVER_PORT = 5000;
@@ -270,6 +275,55 @@ bool handleMsg(int& fd,const std::string& str)
     return false;
 }
 
+bool handleAuth(const int fd, ttmath::UInt<3>& nonce,const std::string& name)
+{
+    if(!NetCommon::sendPayload(fd,Message(ID,{name})))
+    {
+        Utils::error("Could not send ID!");
+        return false;
+    }
+
+    std::vector<unsigned char> signedNonce;
+    if(!NetCommon::recvMsg(fd,signedNonce))
+    {
+        Utils::error("Could not read Nonce!");
+        return false;
+    }
+
+    Utils::log("Signed Nonce Str:",signedNonce.size());
+    
+    Crypto::printEncryption(signedNonce);
+
+
+    auto privKey = Crypto::load_private_key_from_file("Keys/"+name+".pem"); 
+
+    std::vector<unsigned char> decryptedNonce(RSA_size(privKey));
+    int decryptedBytes = RSA_private_decrypt(
+                     signedNonce.size(),
+                     signedNonce.data(),
+                     decryptedNonce.data(),
+                     privKey,
+                     RSA_PKCS1_OAEP_PADDING);
+
+    if(decryptedBytes == -1)
+    {
+        Utils::log(ERR_error_string(ERR_get_error(), nullptr));
+    }
+
+
+
+    Crypto::printEncryption(decryptedNonce);
+
+
+    nonce.SetZero();
+    for(int i = 0; i < decryptedNonce.size();i++)
+    {
+        nonce.AddInt(decryptedNonce[i] << (i * 8));
+    }
+
+    Utils::log(decryptedBytes,"Decrypted Nonce:", nonce);
+}
+
 int main(int argc, char** argv) 
 {
     std::string serverIp = "127.0.0.1";
@@ -301,7 +355,10 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    NetCommon::sendPayload(centralServerFd,Message(ID,{name}));
+    ttmath::UInt<3> nonce1024;
+
+    handleAuth(centralServerFd,nonce1024,name);
+
 
     while(true)
     {
