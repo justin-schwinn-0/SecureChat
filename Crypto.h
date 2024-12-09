@@ -5,8 +5,11 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include "ttmath/ttmath.h"
+
 
 const std::string DEFAULT_KEY ="bob";
+const std::string DEFAULT_KEY_INTEGRITY ="alice";
 const std::string DEFAULT_IV ="1234567890abcdef";
 
 class Crypto
@@ -38,6 +41,17 @@ public:
     static RSA* load_public_key_from_file(const std::string& filename); 
 
     static void printEncryption(std::vector<unsigned char> digest);
+
+
+    template<long unsigned int T>
+    static void charVecToNum(const std::vector<unsigned char>& vec,ttmath::UInt<T>& num)
+    {
+        num.SetZero();
+        for(int i = 0; i < vec.size();i++)
+        {
+            num.AddInt(vec[i] << (i * 8));
+        }
+    }
 };
 
 

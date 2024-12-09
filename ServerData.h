@@ -35,6 +35,8 @@ public:
     std::string getRequester(const std::string& user);
 
     std::vector<std::string> getListForUser(const std::string& user);
+
+    void setBusy(const std::string& user);
     
 
 private:

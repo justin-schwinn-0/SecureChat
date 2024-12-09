@@ -34,10 +34,10 @@ void generateRandom(ttmath::UInt<T>& num)
     //Utils::log("generated",num);
 }
 
-bool authenticate(const int& fd,const Message& msg,ServerData& sd)
+bool authenticate(const int& fd,const Message& msg,ServerData& sd,ttmath::UInt<8>& nonce)
 {
     // do auth
-    ttmath::UInt<3> nonce1024;
+    ttmath::UInt<8> nonce1024;
 
     generateRandom(nonce1024);
 
@@ -62,16 +62,35 @@ bool authenticate(const int& fd,const Message& msg,ServerData& sd)
             unsignedNonce.push_back(static_cast<unsigned char>(segment & 0xFF));
             segment>>=8;
         }
-        Crypto::printEncryption(unsignedNonce);
     }
 
     std::vector<unsigned char> signedNonce(RSA_size(pubKey));
     int encryptedBytes = RSA_public_encrypt(
-                     nonce1024.Size()*8,
+                     nonce1024.Size()*4,
                      reinterpret_cast <const unsigned char*>(nonce1024.table),
                      signedNonce.data(),
                      pubKey,
                      RSA_PKCS1_OAEP_PADDING);
+
+    auto privKey = Crypto::load_private_key_from_file("Keys/"+name+".pem"); 
+
+    std::vector<unsigned char> decryptedNonce(RSA_size(privKey));
+    int decryptedBytes = RSA_private_decrypt(
+                     signedNonce.size(),
+                     signedNonce.data(),
+                     decryptedNonce.data(),
+                     privKey,
+                     RSA_PKCS1_OAEP_PADDING);
+
+    if(decryptedBytes == -1)
+    {
+        Utils::log(ERR_error_string(ERR_get_error(), nullptr));
+    }
+
+
+    Crypto::charVecToNum(decryptedNonce,nonce);
+
+
 
     if(encryptedBytes == -1)
     {
@@ -83,19 +102,15 @@ bool authenticate(const int& fd,const Message& msg,ServerData& sd)
         Utils::error("Could not send Nonce!");
     }
 
-    Crypto::printEncryption(signedNonce);
-
-    Utils::log("encrypted", encryptedBytes);
-
     RSA_free(pubKey);
     return false;
 }
 
-void processSelfId(const int& fd,const Message& msg,ServerData& sd)
+void processSelfId(const int& fd,const Message& msg,ServerData& sd, ttmath::UInt<8> key)
 {
     std::string ip = NetCommon::getIp(fd);
 
-    //authenticate(fd,msg,sd);
+    authenticate(fd,msg,sd,key);
 
     Utils::log("user is",msg.payload[0],ip);
 
@@ -104,7 +119,7 @@ void processSelfId(const int& fd,const Message& msg,ServerData& sd)
     sd.printUsers();
 }
 
-void sendList(int& fd,ServerData& sd,const std::string& requestingUser)
+void sendList(int& fd,ServerData& sd,const std::string& requestingUser,const std::string& key)
 {
     std::vector<std::string> msg;
     for(auto s: sd.getListForUser(requestingUser))
@@ -112,10 +127,10 @@ void sendList(int& fd,ServerData& sd,const std::string& requestingUser)
         msg.push_back(s+":");
     }
 
-    NetCommon::secSendPayload(fd,Message(LIST,msg));
+    NetCommon::secSendPayload(fd,Message(LIST,msg),key);
 }
 
-void connectCtC(int& client1,const Message& msg,ServerData& sd)
+void connectCtC(int& client1,const Message& msg,ServerData& sd,const std::string& key)
 {
     Utils::log("connecting",msg.payload[0], "to",msg.payload[1]);
         
@@ -127,10 +142,12 @@ void connectCtC(int& client1,const Message& msg,ServerData& sd)
     else
     {
         Utils::log("Cannot allow request");
+
+        NetCommon::secSendPayload(client1,Message(REJECT,{}),key);
     }
 }
 
-void clientAcceptsConnection(int& client2,const Message& msg,ServerData& sd)
+void clientAcceptsConnection(int& client2,const Message& msg,ServerData& sd,const std::string& key)
 {
     // tell client 2 to open server
     // tell client 1 to connect to client 2 server
@@ -143,43 +160,42 @@ void clientAcceptsConnection(int& client2,const Message& msg,ServerData& sd)
     if(client1Name == NONE)
     {
         Utils::log("Client",client2Name,"has no requests!");
-        NetCommon::secSendPayload(client2,Message(REJECT,{}));
+        NetCommon::secSendPayload(client2,Message(REJECT,{}),key);
         return;
 
     }
     Utils::log("User",client2Name,"accepted connection to",client1Name);
 
+    sd.setBusy(client1Name);
+    sd.setBusy(client2Name);
+
     // send client 2 opens server
-    NetCommon::secSendPayload(client2,Message(OPEN_SERVER,{}));
+    NetCommon::secSendPayload(client2,Message(OPEN_SERVER,{}),key);
 
 
     int client1Fd = sd.getUser(client1Name).fd;
     std::string client2Ip = NetCommon::getIp(client2);
 
     // send client 1 cmd to connect with IP
-    NetCommon::secSendPayload(client1Fd,Message(CONNECT_TO,{client2Ip}));
+    NetCommon::secSendPayload(client1Fd,Message(CONNECT_TO,{client2Ip}),key);
     
 }      
 
-bool handleMsg(int& fd,const std::string& str,ServerData& data)
+bool handleMsg(int& fd,const std::string& str,ServerData& data,const std::string& key)
 {
     auto msg = Message(str);
     
 
     switch(msg.msgId)
     {
-        case ID:
-            processSelfId(fd,msg,data);
-            sendList(fd,data,msg.payload[0]);
-            break;
         case LIST:
-            sendList(fd,data,msg.payload[0]);
+            sendList(fd,data,msg.payload[0],key);
             break;
         case CON:
-            connectCtC(fd,msg,data);
+            connectCtC(fd,msg,data,key);
             break;
         case ACCEPT:
-            clientAcceptsConnection(fd,msg,data);
+            clientAcceptsConnection(fd,msg,data,key);
             break;
         default:
             Utils::log("Unknown msg_id:",msg.msgId,"\n",str);
@@ -193,12 +209,27 @@ bool handleMsg(int& fd,const std::string& str,ServerData& data)
 void handleConnection(int fd,ServerData& data)
 {
     Utils::log("connected with FD",fd);
+    
+
+    std::string msg;
+    if(!NetCommon::recvMsg(fd,msg))
+    {
+        Utils::log("recv Failed!");
+    }
+
+
+    Utils::log(msg);
+    auto IdMsg = Message(msg);
+
+    ttmath::UInt<8> key;
+    processSelfId(fd,IdMsg,data,key);
+
 
     bool hasExited = false;
     do
     {
         std::string msg;
-        if(!NetCommon::secRecvMsg(fd,msg))
+        if(!NetCommon::secRecvMsg(fd,msg,key.ToString()))
         {
             Utils::log("recv Failed!");
         }
@@ -210,7 +241,7 @@ void handleConnection(int fd,ServerData& data)
         else
         {
             //Utils::log("Received",msg);
-            hasExited = handleMsg(fd,msg,data);
+            hasExited = handleMsg(fd,msg,data,key.ToString());
         }
 
         //Utils::log(fd,"has exited:",hasExited);
@@ -220,8 +251,6 @@ void handleConnection(int fd,ServerData& data)
 
 int main()
 {
-
-    ttmath::UInt<4> bigInt1 = "123456789123456789";
 
     NetServer server;
 

@@ -56,7 +56,7 @@ void listCommands()
     Utils::log("Commands:", cl);
 }
 
-bool handleCommand(int& serverFd,const std::string& cmd,const std::string& name)
+bool handleCommand(int& serverFd,const std::string& cmd,const std::string& name,const std::string& key)
 {
     auto segments = Utils::split(cmd," ");
 
@@ -82,16 +82,16 @@ bool handleCommand(int& serverFd,const std::string& cmd,const std::string& name)
     switch(msgId)
     {
         case LIST:
-            NetCommon::secSendPayload(serverFd,Message(msgId,{name}));
+            NetCommon::secSendPayload(serverFd,Message(msgId,{name}),key);
             break;
         case CON:
-            NetCommon::secSendPayload(serverFd,Message(msgId,{name,segments[1]}));
+            NetCommon::secSendPayload(serverFd,Message(msgId,{name,segments[1]}),key);
             break;
         case ACCEPT:
-            NetCommon::secSendPayload(serverFd,Message(msgId,{name}));
+            NetCommon::secSendPayload(serverFd,Message(msgId,{name}),key);
             break;
         case REJECT:
-            NetCommon::secSendPayload(serverFd,Message(msgId,{name}));
+            NetCommon::secSendPayload(serverFd,Message(msgId,{name}),key);
             break;
         case HELP:
             listCommands();
@@ -120,6 +120,10 @@ std::string getInlineInput(std::string prompt)
 
     std::cout << prompt;
     std::getline(std::cin, out);
+    if(out.empty())
+    {
+        out = "...";
+    }
     return out;
 }
 
@@ -136,9 +140,9 @@ void handleList(std::vector<std::string> list)
     }
 }
 
-void sendExitChatCmd(const int fd)
+void sendExitChatCmd(const int fd,const std::string& key)
 {
-    if(!NetCommon::secSendPayload(fd,Message(EXIT,{})));
+    if(!NetCommon::secSendPayload(fd,Message(EXIT,{}),key))
     {
         Utils::log("could not send exit Cmd!");
     }
@@ -165,7 +169,7 @@ bool handleChatMsg(const std::string& str)
 }
 
 
-void chatLoop(int fd)
+void chatLoop(int fd,const std::string& clientKey)
 {
     Utils::log("Entering Chat with",NetCommon::getIp(fd));
     Utils::log("EXIT to exit chat\n");
@@ -174,10 +178,10 @@ void chatLoop(int fd)
     while(!hasExited)
     {
         std::string str;
-        if(!NetCommon::secRecvMsg(fd,str))
+        if(!NetCommon::secRecvMsg(fd,str,clientKey))
         {
             Utils::log("recv Failed!");
-            sendExitChatCmd(fd);
+            sendExitChatCmd(fd,clientKey);
             hasExited = true;
         }
         else
@@ -190,15 +194,15 @@ void chatLoop(int fd)
 
         if(msgOut == "EXIT")
         {
-            sendExitChatCmd(fd);
+            sendExitChatCmd(fd,clientKey);
             hasExited = true;
         }
         else
         {
-            if(!NetCommon::secSendPayload(fd,Message(CHAT_MSG,{msgOut})))
+            if(!NetCommon::secSendPayload(fd,Message(CHAT_MSG,{msgOut}),clientKey))
             {
                 Utils::log("Could not send message!");
-                sendExitChatCmd(fd);
+                sendExitChatCmd(fd,clientKey);
                 hasExited = true;
             }
         }
@@ -206,7 +210,7 @@ void chatLoop(int fd)
     Utils::log("Exiting chat");
 }
 
-void openServer()
+void openServer(const std::string&  clientKey)
 {
     Utils::log("Opening server");
     NetServer srv;
@@ -226,13 +230,13 @@ void openServer()
 
     std::string firstMessage = getInput("Send first Message:");
 
-    NetCommon::secSendPayload(fd,Message(CHAT_MSG,{firstMessage}));
+    NetCommon::secSendPayload(fd,Message(CHAT_MSG,{firstMessage}),clientKey);
 
-    chatLoop(fd);
+    chatLoop(fd,clientKey);
 
 }
 
-void connectToOtherClient(const Message& msg)
+void connectToOtherClient(const Message& msg,const std::string& clientKey)
 {
     //Utils::log("connect to other client");
 
@@ -246,10 +250,10 @@ void connectToOtherClient(const Message& msg)
 
     //Utils::log("connected to other client");
 
-    chatLoop(otherClientFd);
+    chatLoop(otherClientFd,clientKey);
 }
 
-bool handleMsg(int& fd,const std::string& str)
+bool handleMsg(int& fd,const std::string& str,const std::string& key)
 {
     auto msg = Message(str);
 
@@ -259,11 +263,17 @@ bool handleMsg(int& fd,const std::string& str)
             handleList(msg.payload);
             break;
         case OPEN_SERVER:
-            openServer();
+            {
+            std::string clientKey;
+            openServer(clientKey);
             break;
+            }
         case CONNECT_TO:
-            connectToOtherClient(msg);
+            {
+            std::string clientKey;
+            connectToOtherClient(msg,clientKey);
             break;
+            }
         case REJECT:
             Utils::log("No Connection to Accept!");
             break;
@@ -275,9 +285,9 @@ bool handleMsg(int& fd,const std::string& str)
     return false;
 }
 
-bool handleAuth(const int fd, ttmath::UInt<3>& nonce,const std::string& name)
+bool handleAuth(const int fd, ttmath::UInt<8>& key,const std::string& name)
 {
-    if(!NetCommon::secSendPayload(fd,Message(ID,{name})))
+    if(!NetCommon::sendPayload(fd,Message(ID,{name})))
     {
         Utils::error("Could not send ID!");
         return false;
@@ -289,10 +299,6 @@ bool handleAuth(const int fd, ttmath::UInt<3>& nonce,const std::string& name)
         Utils::error("Could not read Nonce!");
         return false;
     }
-
-    Utils::log("Signed Nonce Str:",signedNonce.size());
-    
-    Crypto::printEncryption(signedNonce);
 
 
     auto privKey = Crypto::load_private_key_from_file("Keys/"+name+".pem"); 
@@ -310,18 +316,15 @@ bool handleAuth(const int fd, ttmath::UInt<3>& nonce,const std::string& name)
         Utils::log(ERR_error_string(ERR_get_error(), nullptr));
     }
 
+    Crypto::charVecToNum(decryptedNonce,key);
 
-
-    Crypto::printEncryption(decryptedNonce);
-
-
-    nonce.SetZero();
-    for(int i = 0; i < decryptedNonce.size();i++)
+    std::string resp = (key+1).ToString();
+    if(!NetCommon::secSendPayload(fd,Message(CHALLENGE_RESP,{resp}),key.ToString()))
     {
-        nonce.AddInt(decryptedNonce[i] << (i * 8));
+        Utils::log("Cant send response");
+        return false;
     }
 
-    Utils::log(decryptedBytes,"Decrypted Nonce:", nonce);
 }
 
 int main(int argc, char** argv) 
@@ -355,37 +358,33 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    //ttmath::UInt<3> nonce1024;
+    ttmath::UInt<8> key;
 
-    //handleAuth(centralServerFd,nonce1024,name);
-    if(!NetCommon::secSendPayload(centralServerFd,Message(ID,{name})))
-    {
-        Utils::error("Could not send ID!");
-        return false;
-    }
+    handleAuth(centralServerFd,key,name);
 
+    Utils::log("out of auth!");
 
     while(true)
     {
         //Utils::log("Listening to server");
         std::string msg;
-        if(!NetCommon::secRecvMsg(centralServerFd,msg))
+        if(!NetCommon::secRecvMsg(centralServerFd,msg,key.ToString()))
         {
             Utils::log("recv Failed!");
         }
 
-        handleMsg(centralServerFd,msg);
+        handleMsg(centralServerFd,msg,key.ToString());
 
         bool cmdSuccess = false;
         do
         {
-            cmdSuccess = handleCommand(centralServerFd,getInlineInput(">"),name);
+            cmdSuccess = handleCommand(centralServerFd,getInlineInput(">"),name,key.ToString());
         }
         while(!cmdSuccess);
     }
     Utils::log("exiting");
 
-    //NetCommon::secSendPayload(centralServerFd,Message(CON,{name,connectToUser}));
+    //NetCommon::secSendPayload(centralServerFd,Message(CON,{name,connectToUser}),key));
 
     close(centralServerFd);
     return 0;

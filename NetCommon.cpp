@@ -50,7 +50,7 @@ bool NetCommon::recvMsg(const int& fd, std::string& out)
 }
 
 
-bool NetCommon::secRecvMsg(const int& fd, std::string& out)
+bool NetCommon::secRecvMsg(const int& fd, std::string& out,const std::string& key)
 {
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
@@ -59,10 +59,21 @@ bool NetCommon::secRecvMsg(const int& fd, std::string& out)
 
     ssize_t bytes_received = sctp_recvmsg(fd, buffer, BUFFER_SIZE, NULL,0,&sndrcvinfo,&flags);
 
-    std::string msg = buffer;
-    out = Crypto::custom_decrypt(DEFAULT_KEY,msg,DEFAULT_IV);
-    Utils::log("got",out);
-    Utils::log(out.size(),bytes_received,msg.size());
+    std::string msgRx = std::string(buffer,bytes_received);
+
+    std::string cipherText = msgRx.substr(0,msgRx.size()-16);
+    std::string hash = msgRx.substr(msgRx.size()-16);
+
+    std::string newhash = Crypto::md5_encrypt(key,"0000000000000000",cipherText);
+
+    if(newhash != hash)
+    {
+        Utils::log("Message integrity failure!");
+        return false;
+    }
+
+    out = Crypto::custom_decrypt(key,cipherText,DEFAULT_IV);
+
     return true;
 }
 
@@ -93,18 +104,18 @@ bool NetCommon::sendMsg(const int& fd, const std::string& in)
     return true;
 }
 
-bool NetCommon::secSendMsg(const int& fd, const std::string& in)
+bool NetCommon::secSendMsg(const int& fd, const std::string& in,const std::string& key)
 {
-    Utils::log("sending:",in, in.size());
-    std::string msg = Crypto::custom_encrypt(DEFAULT_KEY,in,DEFAULT_IV);
-    int ret = send(fd, msg.c_str(), msg.size(), 0);
+    std::string msg = Crypto::custom_encrypt(key,in,DEFAULT_IV);
+    std::string msgHash = Crypto::md5_encrypt(key,"0000000000000000",msg);
+
+    std::string msgToSend = msg+msgHash;
+    int ret = send(fd, msgToSend.c_str(), msgToSend.size(), 0);
     if(ret < 0)
     {
         Utils::log("could not send message:",in,ret);
         return false;
     }
-
-    Utils::log("sent:",ret,);
 
     return true;
 }
@@ -177,7 +188,7 @@ bool NetCommon::sendPayload(const int& fd,const Message& message)
     return NetCommon::sendMsg(fd,msg);
 }
 
-bool NetCommon::secSendPayload(const int& fd,const Message& message)
+bool NetCommon::secSendPayload(const int& fd,const Message& message,const std::string& key)
 {
     std::string msg = std::to_string(message.msgId) + DELIM;
 
@@ -191,5 +202,5 @@ bool NetCommon::secSendPayload(const int& fd,const Message& message)
         }
     }
 
-    return NetCommon::secSendMsg(fd,msg);
+    return NetCommon::secSendMsg(fd,msg,key);
 }

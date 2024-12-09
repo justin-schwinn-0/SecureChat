@@ -34,7 +34,7 @@ bool ServerData::makeRequest(std::string requester ,std::string requested)
     {
         return false;
     }
-    if(userData.find(requested) != userData.end() && getRequester(requested) == NONE)
+    if(userData.find(requested) != userData.end() && getRequester(requested) == NONE && !userData[requested].busy)
     {
         userData[requested].commRequest = requester;
         return true;
@@ -83,4 +83,9 @@ std::vector<std::string> ServerData::getListForUser(const std::string& user)
     }
 
     return list;
+}
+
+void ServerData::setBusy(const std::string& user)
+{
+    userData[user].busy = true;
 }
